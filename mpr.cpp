@@ -6,12 +6,17 @@ using namespace std;
 using namespace cimg_library;
 
 template<typename T>
-CImg<T> get_planeX(const CImg<T> origin, const unsigned int x, const unsigned int y, const unsigned int z) {
-    CImg<> imgTmp(origin.height(), origin.depth(), 1);
+CImg<T> get_planeX(const CImg<T> origin, const unsigned int x, const unsigned int y, const unsigned int z, const int min, const int max) {
+    unsigned int hor = origin.height();
+    unsigned int dor = origin.depth();
 
-    for(int y = 0; y < origin.height(); y++) {
-        for(int z = 0; z < origin.depth(); z++) {
-            imgTmp(y, z, 0) = origin(x, y, z);
+    CImg<> imgTmp(hor, dor, 1, 3);
+
+    for(int i = 0; i < hor; i++) {
+        for(int j = 0; j < dor; j++) {
+            imgTmp(i, j, 0, 0) = origin(x, i, j);
+            imgTmp(i, j, 0, 1) = origin(x, i, j);
+            imgTmp(i, j, 0, 2) = origin(x, i, j);
         }
     }
 
@@ -19,12 +24,17 @@ CImg<T> get_planeX(const CImg<T> origin, const unsigned int x, const unsigned in
 }
 
 template<typename T>
-CImg<T> get_planeY(const CImg<T> origin, const unsigned int x, const unsigned int y, const unsigned int z) {
-    CImg<> imgTmp(origin.width(), origin.depth(), 1);
+CImg<T> get_planeY(const CImg<T> origin, const unsigned int x, const unsigned int y, const unsigned int z, const int min, const int max) {
+    unsigned int wor = origin.width();
+    unsigned int dor = origin.depth();
 
-    for(int x = 0; x < origin.width(); x++) {
-        for(int z = 0; z < origin.depth(); z++) {
-            imgTmp(x, z, 0) = origin(x, y, z);
+    CImg<> imgTmp(wor, dor, 1, 3);
+
+    for(int i = 0; i < wor; i++) {
+        for(int j = 0; j < dor; j++) {
+            imgTmp(i, j, 0, 0) = origin(i, y, j);
+            imgTmp(i, j, 0, 1) = origin(i, y, j);
+            imgTmp(i, j, 0, 2) = origin(i, y, j);
         }
     }
 
@@ -32,12 +42,17 @@ CImg<T> get_planeY(const CImg<T> origin, const unsigned int x, const unsigned in
 }
 
 template<typename T>
-CImg<T> get_planeZ(const CImg<T> origin, const unsigned int x, const unsigned int y, const unsigned int z) {
-    CImg<> imgTmp(origin.width(), origin.height(), 1);
+CImg<T> get_planeZ(const CImg<T> origin, const unsigned int x, const unsigned int y, const unsigned int z, const int min, const int max) {
+    unsigned int wor = origin.width();
+    unsigned int hor = origin.height();
 
-    for(int x = 0; x < origin.width(); x++) {
-        for(int y = 0; y < origin.height(); y++) {
-            imgTmp(x, y, 0) = origin(x, y, z);
+    CImg<> imgTmp(wor, hor, 1, 3);
+
+    for(int i = 0; i < wor; i++) {
+        for(int j = 0; j < hor; j++) {
+            imgTmp(i, j, 0, 0) = origin(i, j, z);
+            imgTmp(i, j, 0, 1) = origin(i, j, z);
+            imgTmp(i, j, 0, 2) = origin(i, j, z);
         }
     }
 
@@ -55,21 +70,23 @@ int main(int argc, char* argv[]) {
     // ****************************
 
     CImg<> imgOrigin;
-    CImg<> imgX, imgY, imgZ;
-    CImg<> row0, row1, grid;
-    CImgDisplay disp, dispTest;
+    CImg<> img[3];
+    CImg<> grid;
+    CImgDisplay disp;
 
     float voxelSize[3];
 
-    unsigned int width;
-    unsigned int height;
-    unsigned int depth;
+    float min;
+    float max;
+
+    unsigned int width, height, depth;
+    unsigned int dispWidth, dispHeight;
 
     unsigned int displayedColumn;
     unsigned int displayedRow;
     unsigned int displayedSlice;
 
-    bool redraw;
+    bool redraw[4];
 
     // *******************************
     // *** VARIABLE INITAILIZATION ***
@@ -77,21 +94,32 @@ int main(int argc, char* argv[]) {
 
     imgOrigin.load_analyze(argv[1], voxelSize);
 
+    min = imgOrigin.min();
+    max = imgOrigin.max();
+
+    const float red[] = {max, min, min}, green[] = {min, max, min}, blue[] = {min, min, max};
+
     width = imgOrigin.width();
     height = imgOrigin.height();
     depth = imgOrigin.depth();
 
-    imgX.resize(height, depth, 1, 1);
-    imgY.resize(width, depth, 1, 1);
-    imgZ.resize(width, height, 1, 1);
+    img[0].resize(height, depth, 1, 3);
+    img[1].resize(width, depth, 1, 1);
+    img[2].resize(width, height, 1, 1);
 
-    disp.resize(width, height);
-    dispTest.resize(width, height);
+    dispWidth = width + height;
+    dispHeight = depth + height;
+
+    disp.resize(dispWidth, dispHeight);
 
     displayedColumn = width / 2;
     displayedRow = height / 2;
     displayedSlice = depth / 2;
-    redraw = true;
+    redraw[0] = redraw[1] = redraw[2] = redraw[3] = true;
+
+    // imgX = get_planeX(imgOrigin, displayedColumn, displayedRow, displayedSlice, min, max);
+    // imgY = get_planeY(imgOrigin, displayedColumn, displayedRow, displayedSlice, min, max);
+    // imgZ = get_planeZ(imgOrigin, displayedColumn, displayedRow, displayedSlice, min, max);
 
     // ***************
     // *** PROGRAM ***
@@ -99,66 +127,98 @@ int main(int argc, char* argv[]) {
 
     while(!disp.is_closed() && !disp.is_keyESC()) {
         if(disp.wheel()) {
-            if(displayedColumn != depth-1 && disp.wheel() > 0) {
-                displayedColumn++;
-                redraw = true;
-            }
-            if(displayedColumn != 0 && disp.wheel() < 0) {
-                displayedColumn--;
-                redraw = true;
-            }
+            if(disp.mouse_x() < width && disp.mouse_y() < depth) {
+                if(displayedRow != height-1 && disp.wheel() > 0) {
+                    displayedRow++;
+                    redraw[2] = true;
+                    redraw[0] = true;
+                }
+                if(displayedRow != 0 && disp.wheel() < 0) {
+                    displayedRow--;
+                    redraw[2] = true;
+                    redraw[0] = true;
+                }
+            } else if(disp.mouse_x() > width && disp.mouse_y() < depth) {
+                if(displayedColumn != width-1 && disp.wheel() > 0) {
+                    displayedColumn++;
+                    redraw[1] = true;
+                    redraw[0] = true;
+                }
+                if(displayedColumn != 0 && disp.wheel() < 0) {
+                    displayedColumn--;
+                    redraw[1] = true;
+                    redraw[0] = true;
+                }
+            } else if(disp.mouse_x() < width && disp.mouse_y() > depth) {
+               if(displayedSlice != depth-1 && disp.wheel() > 0) {
+                   displayedSlice++;
+                   redraw[3] = true;
+                   redraw[0] = true;
+               }
+               if(displayedSlice != 0 && disp.wheel() < 0) {
+                   displayedSlice--;
+                   redraw[3] = true;
+                   redraw[0] = true;
+               }
+           }
 
-            if(displayedRow != depth-1 && disp.wheel() > 0) {
-                displayedRow++;
-                redraw = true;
-            }
-            if(displayedRow != 0 && disp.wheel() < 0) {
-                displayedRow--;
-                redraw = true;
-            }
-
-            if(displayedSlice != depth-1 && disp.wheel() > 0) {
-                displayedSlice++;
-                redraw = true;
-            }
-            if(displayedSlice != 0 && disp.wheel() < 0) {
-                displayedSlice--;
-                redraw = true;
-            }
-
-            //reinitialise l'event wheel (set to 0)
-            disp.set_wheel();
+           //reinitialise l'event wheel (set to 0)
+           disp.set_wheel();
         }
 
-        // if(disp.button()&1) {
-        //     cout << disp.mouse_x() << " " << disp.mouse_y() << endl;
+        if(disp.button()&1) {
+            if(disp.mouse_x() < width && disp.mouse_y() < depth) {
+                displayedColumn = disp.mouse_x();
+                displayedSlice = disp.mouse_y();
+                redraw[1] = true;
+                redraw[3] = true;
+                redraw[0] = true;
+            } else if(disp.mouse_x() > width && disp.mouse_y() < depth) {
+                displayedRow = disp.mouse_x() - width;
+                displayedSlice = disp.mouse_y();
+                redraw[2] = true;
+                redraw[3] = true;
+                redraw[0] = true;
+            } else if(disp.mouse_x() < width && disp.mouse_y() > depth) {
+                displayedColumn = disp.mouse_x();
+                displayedRow = disp.mouse_y() - depth;
+                redraw[1] = true;
+                redraw[2] = true;
+                redraw[0] = true;
+            }
+        }
+
+        // if(disp.is_resized()) {
         //
         // }
 
-        if(redraw) {
-            imgOrigin.display(dispTest);
-            imgX = get_planeX(imgOrigin, displayedColumn, height, depth);
-            // for(int x = 0; x < height; x++) {
-            //     for(int y = 0; y < depth; y++) {
-            //         imgX(x, y, 0) = imgOrigin(displayedColumn, x, y);
-            //     }
-            // }
-            imgY = get_planeY(imgOrigin, width, displayedRow, depth);
-            // for(int x = 0; x < width; x++) {
-            //     for(int y = 0; y < depth; y++) {
-            //         imgY(x, y, 0) = imgOrigin(x, displayedRow, y);
-            //     }
-            // }
-            imgZ = get_planeZ(imgOrigin, width, height, displayedSlice);
-            // for(int x = 0; x < width; x++) {
-            //     for(int y = 0; y < height; y++) {
-            //         imgZ(x, y, 0) = imgOrigin(x, y, displayedSlice);
-            //     }
-            // }
-            grid = imgX.append(imgY, 'x');
-            grid = grid.append(imgZ, 'y');
+        if(redraw[0]) {
+            if(redraw[1]) {
+                img[0] = get_planeX(imgOrigin, displayedColumn, displayedRow, displayedSlice, min, max);
+                redraw[1] = false;
+            }
+            if(redraw[2]) {
+                img[1] = get_planeY(imgOrigin, displayedColumn, displayedRow, displayedSlice, min, max);
+                redraw[2] = false;
+            }
+            if(redraw[3]) {
+                img[2] = get_planeZ(imgOrigin, displayedColumn, displayedRow, displayedSlice, min, max);
+                redraw[3] = false;
+            }
+
+            grid.resize(0, 0, 1, 3);
+            grid = grid.append(img[1], 'x');
+            grid = grid.append(img[0], 'x');
+            grid = grid.append(img[2], 'y');
+
+            grid.draw_line(displayedColumn, 0, displayedColumn, dispHeight, red, 1);
+            grid.draw_line(displayedRow+width, 0, displayedRow+width, depth, green, 1);
+            grid.draw_line(0, displayedRow+depth, width, displayedRow+depth, green, 1);
+            grid.draw_line(0, displayedSlice, dispWidth, displayedSlice, blue, 1);
+
             grid.display(disp);
-            redraw = false;
+
+            redraw[0] = false;
         }
     }
 
