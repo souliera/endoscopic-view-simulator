@@ -6,17 +6,14 @@ using namespace std;
 using namespace cimg_library;
 
 template<typename T>
-CImg<T> get_planeX(const CImg<T> origin, const unsigned int x, const unsigned int y, const unsigned int z, const int min, const int max) {
-    unsigned int hor = origin.height();
-    unsigned int dor = origin.depth();
+CImg<T> get_planeX(const CImg<T> origin, const int width, const int height, const unsigned int k) {
+    CImg<> imgTmp(width, height, 1, 3);
 
-    CImg<> imgTmp(hor, dor, 1, 3);
-
-    for(int i = 0; i < hor; i++) {
-        for(int j = 0; j < dor; j++) {
-            imgTmp(i, j, 0, 0) = origin(x, i, j);
-            imgTmp(i, j, 0, 1) = origin(x, i, j);
-            imgTmp(i, j, 0, 2) = origin(x, i, j);
+    for(int i = 0; i < width; i++) {
+        for(int j = 0; j < height; j++) {
+            imgTmp(i, j, 0, 0) = origin(k, i, j);
+            imgTmp(i, j, 0, 1) = origin(k, i, j);
+            imgTmp(i, j, 0, 2) = origin(k, i, j);
         }
     }
 
@@ -24,17 +21,14 @@ CImg<T> get_planeX(const CImg<T> origin, const unsigned int x, const unsigned in
 }
 
 template<typename T>
-CImg<T> get_planeY(const CImg<T> origin, const unsigned int x, const unsigned int y, const unsigned int z, const int min, const int max) {
-    unsigned int wor = origin.width();
-    unsigned int dor = origin.depth();
+CImg<T> get_planeY(const CImg<T> origin, const int width, const int height, const unsigned int k) {
+    CImg<> imgTmp(width, height, 1, 3);
 
-    CImg<> imgTmp(wor, dor, 1, 3);
-
-    for(int i = 0; i < wor; i++) {
-        for(int j = 0; j < dor; j++) {
-            imgTmp(i, j, 0, 0) = origin(i, y, j);
-            imgTmp(i, j, 0, 1) = origin(i, y, j);
-            imgTmp(i, j, 0, 2) = origin(i, y, j);
+    for(int i = 0; i < width; i++) {
+        for(int j = 0; j < height; j++) {
+            imgTmp(i, j, 0, 0) = origin(i, k, j);
+            imgTmp(i, j, 0, 1) = origin(i, k, j);
+            imgTmp(i, j, 0, 2) = origin(i, k, j);
         }
     }
 
@@ -42,17 +36,14 @@ CImg<T> get_planeY(const CImg<T> origin, const unsigned int x, const unsigned in
 }
 
 template<typename T>
-CImg<T> get_planeZ(const CImg<T> origin, const unsigned int x, const unsigned int y, const unsigned int z, const int min, const int max) {
-    unsigned int wor = origin.width();
-    unsigned int hor = origin.height();
+CImg<T> get_planeZ(const CImg<T> origin, const int width, const int height, const unsigned int k) {
+    CImg<> imgTmp(width, height, 1, 3);
 
-    CImg<> imgTmp(wor, hor, 1, 3);
-
-    for(int i = 0; i < wor; i++) {
-        for(int j = 0; j < hor; j++) {
-            imgTmp(i, j, 0, 0) = origin(i, j, z);
-            imgTmp(i, j, 0, 1) = origin(i, j, z);
-            imgTmp(i, j, 0, 2) = origin(i, j, z);
+    for(int i = 0; i < width; i++) {
+        for(int j = 0; j < height; j++) {
+            imgTmp(i, j, 0, 0) = origin(i, j, k);
+            imgTmp(i, j, 0, 1) = origin(i, j, k);
+            imgTmp(i, j, 0, 2) = origin(i, j, k);
         }
     }
 
@@ -194,15 +185,15 @@ int main(int argc, char* argv[]) {
 
         if(redraw[0]) {
             if(redraw[1]) {
-                img[0] = get_planeX(imgOrigin, displayedColumn, displayedRow, displayedSlice, min, max);
+                img[0] = get_planeX(imgOrigin,height, depth, displayedColumn);
                 redraw[1] = false;
             }
             if(redraw[2]) {
-                img[1] = get_planeY(imgOrigin, displayedColumn, displayedRow, displayedSlice, min, max);
+                img[1] = get_planeY(imgOrigin, width, depth, displayedRow);
                 redraw[2] = false;
             }
             if(redraw[3]) {
-                img[2] = get_planeZ(imgOrigin, displayedColumn, displayedRow, displayedSlice, min, max);
+                img[2] = get_planeZ(imgOrigin, width, height, displayedSlice);
                 redraw[3] = false;
             }
 
