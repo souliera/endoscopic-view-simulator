@@ -63,7 +63,6 @@ int main(int argc, char const *argv[]) {
 
     for(int i = camX - 50; i < camX + 50; i++) {
         for(int j = camY - 50; j < camY + 50; j++) {
-            // cout << "i : " << i << " j : " << j << endl;
             count = 0;
             for(int k = camZ; k < depth; k++) {
                 m = (k - camZ) / 10.0f;
@@ -71,10 +70,8 @@ int main(int argc, char const *argv[]) {
                 b = m * (j - camY) + camY;
 
                 if(a < 0 || b < 0 || a > width || b > height) {
-                    cout << "a : " << a << " b : " << b << endl;
                     break;
                 }
-
 
                 if(scanner(a, b, k) == 0) {
                     visu(i-(camX - 50), j-(camY - 50), 0, 0) += 255.0f;
