@@ -209,6 +209,8 @@ int main(int argc, char* argv[]) {
 
             grid.display(disp);
 
+            cout << displayedRow << " " << displayedColumn << " " << displayedSlice << endl;
+
             redraw[0] = false;
         }
     }
